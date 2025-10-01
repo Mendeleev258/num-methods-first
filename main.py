@@ -7,7 +7,7 @@ import Math.TridiagonalMatrix as tm
 class DataGenerator:
     def __init__(self,
                  matr_low = -1.0, matr_high = 1.0,
-                 x_low = -1.0, x_high = 1.0, size: int):
+                 x_low = -1.0, x_high = 1.0, size = 5):
         self.matrix = tm.TridiagonalMatrix(size=size)
         self.matrix.fill_random(matr_low, matr_high)
 
