@@ -6,8 +6,8 @@ import Math.TridiagonalMatrix as tm
 
 class DataGenerator:
     def __init__(self,
-                 matr_low: float, matr_high: float,
-                 x_low: float, x_high: float, size: int):
+                 matr_low = -1.0, matr_high = 1.0,
+                 x_low = -1.0, x_high = 1.0, size: int):
         self.matrix = tm.TridiagonalMatrix(size=size)
         self.matrix.fill_random(matr_low, matr_high)
 
@@ -135,7 +135,6 @@ def main_experiment(exp_count: int,
 
 
 if __name__ == '__main__':
-
     df = main_experiment(10)
     df.to_csv('results/results.csv', index=False)
     print('"results.csv" created')

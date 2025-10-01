@@ -2,6 +2,11 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 
+IS_DESKTOP = True
+
+fig_size = [(16, 12), (16, 6)] if IS_DESKTOP else [(9, 6), (12, 4)]
+
+
 # Загружаем данные из CSV файла
 df = pd.read_csv('results/results.csv')
 
@@ -30,7 +35,7 @@ print(f"\nРазмер агрегированных данных: {aggregated_df
 # ДИАГРАММЫ ДЛЯ МЕТОДА A (СРЕДНИЕ ЗНАЧЕНИЯ ПО 10 ЭКСПЕРИМЕНТАМ)
 # ============================================================================
 
-fig1, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(16, 12))
+fig1, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(fig_size[0]))
 fig1.suptitle('МЕТОД A: Зависимости ошибок от размера системы и обусловленности\n(средние значения по 10 экспериментам)',
               fontsize=14, fontweight='bold')
 
@@ -113,7 +118,7 @@ plt.show()
 # ДИАГРАММЫ ДЛЯ МЕТОДА B (СРЕДНИЕ ЗНАЧЕНИЯ ПО 10 ЭКСПЕРИМЕНТАМ)
 # ============================================================================
 
-fig2, ((ax5, ax6), (ax7, ax8)) = plt.subplots(2, 2, figsize=(16, 12))
+fig2, ((ax5, ax6), (ax7, ax8)) = plt.subplots(2, 2, figsize=(fig_size[0]))
 fig2.suptitle('МЕТОД B: Зависимости ошибок от размера системы и обусловленности\n(средние значения по 10 экспериментам)',
               fontsize=14, fontweight='bold')
 
@@ -196,7 +201,7 @@ plt.show()
 # СРАВНИТЕЛЬНЫЕ ДИАГРАММЫ (СРЕДНИЕ ЗНАЧЕНИЯ ПО 10 ЭКСПЕРИМЕНТАМ)
 # ============================================================================
 
-fig3, (ax9, ax10) = plt.subplots(1, 2, figsize=(16, 6))
+fig3, (ax9, ax10) = plt.subplots(1, 2, figsize=(fig_size[1]))
 fig3.suptitle('СРАВНЕНИЕ МЕТОДОВ A и B (средние значения по 10 экспериментам)', fontsize=14, fontweight='bold')
 
 # Сравнение абсолютных ошибок vs размер системы
