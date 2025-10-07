@@ -103,6 +103,7 @@ def main_experiment(exp_count: int,
                     x_low = -1.0, x_high = 1.0):
     data_dict = {
         'system size': [],
+        'filling range': [],
         'absolute error (A)': [],
         'relative error (A)': [],
         'absolute error (B)': [],
@@ -110,7 +111,7 @@ def main_experiment(exp_count: int,
         'conditioning': []
     }
 
-    for size in np.logspace(1, 6, 10, base=2).astype(int):
+    for size in np.logspace(1, 6, 6, base=2).astype(int):
         for i in range(exp_count):
             data = DataGenerator(matr_low, matr_high, x_low, x_high, size)
             matrix, exact_x = data.get_data()
@@ -124,6 +125,7 @@ def main_experiment(exp_count: int,
             cond = matrix.get_cond()
 
             data_dict['system size'].append(size)
+            data_dict['filling range'].append([matr_low, matr_high])
             data_dict['absolute error (A)'].append(absolute_error_a)
             data_dict['relative error (A)'].append(relative_error_a)
             data_dict['absolute error (B)'].append(absolute_error_b)
@@ -134,7 +136,35 @@ def main_experiment(exp_count: int,
     return df
 
 
+def print_test():
+    matrix = tm.TridiagonalMatrix(np.array([0.0, 2.0, 5.0, 2.0, 5.0]),
+                                  np.array([4.0, 6.0, 5.0, 11.0, 8.0]),
+                                  np.array([2.0, 1.0, 2.0, 2.0, 0.0]), size=5)
+    
+    exact_x = v.Vector(np.array([1.0, -1.0, 2.0, -1.0, 1.0]), size=5)
+
+    approx_x_a = ExperimentUtils.progonka(matrix, exact_x)
+    approx_x_b = ExperimentUtils.unstable(matrix, exact_x)
+
+    absolute_error_a, relative_error_a = ExperimentUtils.calculate_error(exact_x, approx_x_a)
+    absolute_error_b, relative_error_b = ExperimentUtils.calculate_error(exact_x, approx_x_b)
+
+    print(f"Exact x:         {exact_x}")
+    print(f"Calculated by A: {approx_x_a}")
+    print(f"Calculated by B: {approx_x_b}")
+    print(f"absolute_error_a: {absolute_error_a:10e}, relative_error_a: {relative_error_a:10e}")
+    print(f"absolute_error_b: {absolute_error_b:10e}, relative_error_a: {relative_error_b:10e}")
+
+
+
 if __name__ == '__main__':
-    df = main_experiment(10)
+    # print_test()
+    df1 = main_experiment(3, -1.0, 1.0, -1.0, 1.0)
+    df10 = main_experiment(3, -10.0, 10.0, -10.0, 10.0)
+    df100 = main_experiment(3, -100.0, 100.0, -100.0, 100.0)
+    df1000 = main_experiment(3, -1000.0, 1000.0, -1000.0, 1000.0)
+
+    df = pd.concat([df1, df10, df100, df1000], ignore_index=True)
+
     df.to_csv('results/results.csv', index=False)
     print('"results.csv" created')

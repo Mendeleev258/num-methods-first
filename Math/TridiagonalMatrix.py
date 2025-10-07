@@ -119,7 +119,7 @@ class TridiagonalMatrix:
 
 
     def _fill_random_diagonally_dominant(self, low, high):
-        """Diagonally dominant generation without conditions in loop"""
+        """Diagonally dominant generation"""
         # Generate base random values
         for i in range(1, self.size + 1):
             self.b[i] = random.uniform(abs(high), 2 * abs(high))
