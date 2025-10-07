@@ -87,21 +87,27 @@ class TridiagonalMatrix:
         """Overload @ operator for vector multiplication"""
         return self.multiply_vector(other)
 
+    def fill_random(self, low=-5.0, high=5.0, condition_type='random'):
+        """
+        Fill matrix with random numbers.
 
-    def fill_random(self, low=-5.0, high=5.0, diagonally_dominant=False):
-        """Fill matrix with random numbers - OPTIMIZED VERSION"""
-
-        if diagonally_dominant:
+        Parameters:
+            low, high: range for random values
+            condition_type: 'random', 'dominant', or 'ill'
+        """
+        if condition_type == 'dominant':
             self._fill_random_diagonally_dominant(low, high)
-        else:
+        elif condition_type == 'ill':
+            self._fill_random_ill_conditioned(low, high)
+        else:  # 'random'
             self._fill_random_regular(low, high)
 
-        # Boundary conditions
-        self.a[1] = 0.0
-        self.c[self.size] = 0.0
+        # Enforce boundary conditions
+        if self.size > 0:
+            self.a[1] = 0.0
+            self.c[self.size] = 0.0
 
         return self
-
 
     def _fill_random_regular(self, low, high):
         """Regular random generation without conditions in loop"""
@@ -142,6 +148,37 @@ class TridiagonalMatrix:
         # Middle rows
         for i in range(2, self.size):  # i = 2, 3, ..., n-1
             self.b[i] = abs(self.b[i]) + abs(self.a[i]) + abs(self.c[i])
+
+
+    def _fill_random_ill_conditioned(self, low, high):
+        """
+        Generate a poorly conditioned tridiagonal matrix.
+        Strategy:
+          - Make main diagonal close to (a[i] + c[i]) but with small random perturbation.
+          - This weakens diagonal dominance → high condition number.
+        """
+        import random
+        eps = 1e-3  # small perturbation to avoid exact singularity
+
+        # Generate off-diagonals first
+        for i in range(2, self.size + 1):
+            self.a[i] = random.uniform(low, high)
+        for i in range(1, self.size):
+            self.c[i] = random.uniform(low, high)
+
+        # Now set main diagonal to be nearly equal to |a[i]| + |c[i]|, but slightly less
+        for i in range(1, self.size + 1):
+            left = abs(self.a[i]) if i > 1 else 0.0
+            right = abs(self.c[i]) if i < self.size else 0.0
+            # Make b[i] just slightly less than left + right → weak or no diagonal dominance
+            base = left + right
+            if base == 0:
+                self.b[i] = random.uniform(-eps, eps)
+            else:
+                # b[i] = (left + right) * (1 - delta), where delta ~ [0.001, 0.1]
+                delta = random.uniform(0.001, 0.1)
+                sign = 1 if random.random() > 0.5 else -1
+                self.b[i] = sign * base * (1 - delta)
 
 
     def read_from_console(self):

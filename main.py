@@ -4,15 +4,14 @@ import pandas as pd
 import Math.Vector as v
 import Math.TridiagonalMatrix as tm
 
+
 class DataGenerator:
-    def __init__(self,
-                 matr_low = -1.0, matr_high = 1.0,
-                 x_low = -1.0, x_high = 1.0, size = 5):
+    def __init__(self, low=-1.0, high=1.0, size=5, condition_type='random'):
         self.matrix = tm.TridiagonalMatrix(size=size)
-        self.matrix.fill_random(matr_low, matr_high)
+        self.matrix.fill_random(low=low, high=high, condition_type=condition_type)  # ← передаём condition_type
 
         self.vector = v.Vector(size=size)
-        self.vector.fill_random(x_low, x_high)
+        self.vector.fill_random(low=low, high=high)
 
     def get_data(self):
         return self.matrix, self.vector
@@ -25,7 +24,7 @@ class DataGenerator:
 class ExperimentUtils:
     @staticmethod
     def progonka(matrix, exact_x):
-        d = matrix @ exact_x    # right hand side
+        d = matrix @ exact_x  # right hand side
         l = v.Vector(np.zeros(matrix.size + 1))
         m = v.Vector(np.zeros(matrix.size + 1))
 
@@ -48,10 +47,9 @@ class ExperimentUtils:
 
         return approximate_x
 
-
     @staticmethod
     def unstable(matrix, exact_x):
-        d = matrix @ exact_x    # right hand side
+        d = matrix @ exact_x  # right hand side
         n = matrix.size
         y = v.Vector(np.zeros(n + 1))
         z = v.Vector(np.zeros(n + 1))
@@ -76,7 +74,6 @@ class ExperimentUtils:
 
         return approximate_x
 
-
     @staticmethod
     def calculate_error(exact_x, approximate_x):
         absolute_errors = v.Vector(size=exact_x.size)
@@ -98,9 +95,7 @@ class ExperimentUtils:
         return absolute_error, relative_error
 
 
-def main_experiment(exp_count: int,
-                    matr_low = -1.0, matr_high = 1.0,
-                    x_low = -1.0, x_high = 1.0):
+def main_experiment(exp_count: int, low=-1.0, high=1.0, condition_type='random'):
     data_dict = {
         'system size': [],
         'filling range': [],
@@ -108,12 +103,11 @@ def main_experiment(exp_count: int,
         'relative error (A)': [],
         'absolute error (B)': [],
         'relative error (B)': [],
-        'conditioning': []
     }
 
     for size in np.logspace(1, 6, 6, base=2).astype(int):
         for i in range(exp_count):
-            data = DataGenerator(matr_low, matr_high, x_low, x_high, size)
+            data = DataGenerator(low, high, size, condition_type=condition_type)  # ← передаём condition_type
             matrix, exact_x = data.get_data()
 
             approx_x_a = ExperimentUtils.progonka(matrix, exact_x)
@@ -122,25 +116,21 @@ def main_experiment(exp_count: int,
             absolute_error_a, relative_error_a = ExperimentUtils.calculate_error(exact_x, approx_x_a)
             absolute_error_b, relative_error_b = ExperimentUtils.calculate_error(exact_x, approx_x_b)
 
-            cond = matrix.get_cond()
-
             data_dict['system size'].append(size)
-            data_dict['filling range'].append([matr_low, matr_high])
+            data_dict['filling range'].append([low, high])
             data_dict['absolute error (A)'].append(absolute_error_a)
             data_dict['relative error (A)'].append(relative_error_a)
             data_dict['absolute error (B)'].append(absolute_error_b)
             data_dict['relative error (B)'].append(relative_error_b)
-            data_dict['conditioning'].append(cond)
 
-    df = pd.DataFrame(data_dict)
-    return df
+    return pd.DataFrame(data_dict)
 
 
 def print_test():
     matrix = tm.TridiagonalMatrix(np.array([0.0, 2.0, 5.0, 2.0, 5.0]),
                                   np.array([4.0, 6.0, 5.0, 11.0, 8.0]),
                                   np.array([2.0, 1.0, 2.0, 2.0, 0.0]), size=5)
-    
+
     exact_x = v.Vector(np.array([1.0, -1.0, 2.0, -1.0, 1.0]), size=5)
 
     approx_x_a = ExperimentUtils.progonka(matrix, exact_x)
@@ -153,18 +143,29 @@ def print_test():
     print(f"Calculated by A: {approx_x_a}")
     print(f"Calculated by B: {approx_x_b}")
     print(f"absolute_error_a: {absolute_error_a:10e}, relative_error_a: {relative_error_a:10e}")
-    print(f"absolute_error_b: {absolute_error_b:10e}, relative_error_a: {relative_error_b:10e}")
-
+    print(f"absolute_error_b: {absolute_error_b:10e}, relative_error_b: {relative_error_b:10e}")
 
 
 if __name__ == '__main__':
-    # print_test()
-    df1 = main_experiment(3, -1.0, 1.0, -1.0, 1.0)
-    df10 = main_experiment(3, -10.0, 10.0, -10.0, 10.0)
-    df100 = main_experiment(3, -100.0, 100.0, -100.0, 100.0)
-    df1000 = main_experiment(3, -1000.0, 1000.0, -1000.0, 1000.0)
+    # List of value ranges: (low, high)
+    ranges = [(-1.0, 1.0), (-10.0, 10.0), (-100.0, 100.0), (-1000.0, 1000.0)]
 
-    df = pd.concat([df1, df10, df100, df1000], ignore_index=True)
+    # System types and corresponding output filenames
+    configurations = [
+        ('random', 'results_rand.csv'),
+        ('dominant', 'results_dominant.csv'),
+        ('ill_conditioned', 'results_ill_conditioned.csv')
+    ]
 
-    df.to_csv('results/results.csv', index=False)
-    print('"results.csv" created')
+    for condition_type, filename in configurations:
+        dataframes = []
+        for low, high in ranges:
+            print(f"Running experiment: condition_type={condition_type}, range=[{low}, {high}]")
+            df = main_experiment(3, low, high, condition_type=condition_type)
+            dataframes.append(df)
+
+        # Concatenate and save
+        final_df = pd.concat(dataframes, ignore_index=True)
+        final_df.to_csv(f'results/{filename}', index=False)
+
+    print("All experiments completed. Results saved to the 'results' folder.")
